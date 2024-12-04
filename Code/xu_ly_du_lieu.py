@@ -24,7 +24,7 @@ def extract_labels(file_name):
 def parse_audio_files(path):
     features_list = []  
     labels_list = []   
-    for fn in glob.glob(path + "\.wav"):
+    for fn in glob.glob(path  + "/*.wav"):
         mfccs, chroma, mel, contrast, tonnetz = extract_feature(fn)
         ext_features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
         features_list.append(ext_features)
@@ -33,3 +33,4 @@ def parse_audio_files(path):
     features = np.array(features_list)
     labels = np.array(labels_list)
     return features, labels
+
