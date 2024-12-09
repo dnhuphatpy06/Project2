@@ -10,9 +10,9 @@ import seaborn as sn
 
 val_fea = 'val_fea.npy'
 val_lab = 'val_lab.npy'
-path_to_npy = 'D:/Project_TH_2/data'
+path_to_npy = "D:\Project2\Data"
 
-filename = 'D:/Project_TH_2/ModelKNN.sav'
+filename = "D:\Project2\Code\KNN\ModelKNN.sav"
 
 ts_features = np.load(f'{path_to_npy}/{val_fea}', allow_pickle=True)
 ts_labels = np.load(f'{path_to_npy}/{val_lab}', allow_pickle=True)
@@ -45,8 +45,16 @@ matrix = confusion_matrix(test_true, test_predicted)
 classes = list(set(ts_labels))
 classes.sort()
 df = pd.DataFrame(matrix, columns=classes, index=classes)
-plt.figure()
-plt.title('Test accuracy using KNN')
-sn.heatmap(df, annot=True)
-
+sn.heatmap(
+    df,
+    annot=True,               
+    fmt='.0f',                
+    cmap='rocket_r',          
+    square=True,              
+    cbar_kws={"shrink": 0.75} 
+)
+plt.title('Confusion Matrix KNN', fontsize=14)  
+plt.xlabel('Predicted Label', fontsize=12) 
+plt.ylabel('True Label', fontsize=12)      
+plt.xticks(rotation=45)                    
 plt.show()
