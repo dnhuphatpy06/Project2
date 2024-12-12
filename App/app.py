@@ -3,9 +3,12 @@ from tkinter import messagebox
 from tkinter import filedialog
 from tkinter.ttk import Progressbar
 from tkinter.ttk import Combobox
-import matplotlib.pyplot as plt
 import pandas as pd
 import _pickle as pickle
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+from keras.models import load_model
 import sounddevice
 from scipy.io.wavfile import write
 import librosa
@@ -16,25 +19,34 @@ import threading
 import time
 import warnings
 warnings.filterwarnings('ignore')
+import logging
+logging.getLogger('absl').setLevel(logging.ERROR)
+logging.getLogger('tensorflow').setLevel(logging.ERROR)
 
-print("""Chào mừng đến với Ứng dụng nhận diện cảm xúc qua giọng nói!
+# check_don = IntVar()
+
+print("""Chào mừng đến với ỨNG DỤNG NHẬN DIỆN CẢM XÚC TỪ GIỌNG NÓI!
 
 Ban đầu có thể mô hình sẽ load hơi lâu, hãy đợi một chút!      
 
 Hướng dẫn sơ bộ:
 1. Nút 'Thoát' ở góc trên bên trái: Thoát ứng dụng.
-2. Nút 'Ghi âm': Ghi âm âm thanh trực tiếp trong 3 giây và sau đó đưa ra dự đoán.
-3. Nút 'Upload file .wav': Tải file âm thanh .wav (Khoảng 3 giây) để mô hình đưa ra dự đoán.
+2. Nút 'Ghi âm ngắn': Ghi âm âm thanh trực tiếp trong 2 giây và sau đó đưa ra dự đoán.
+3. Nút 'Ghi âm dài': Ghi âm âm thanh trực tiếp cho đến khi bấm dừng.
+3. Nút 'Upload file .wav': Tải file âm thanh .wav để mô hình đưa ra dự đoán.
 4. Ô 'Chọn mô hình': Chọn mô hình mà bạn muốn dùng để dự đoán. Lưu ý: Hãy chọn đúng tên mô hình!
 
 Chúc bạn có trải nghiệm tốt nhất!""")
+
+cam_xuc = ('Giận dữ', 'Sợ hãi', 'Hạnh phúc', 'Bình thường', 'Buồn bã')
+tuong_ung = ('ANG','FEA', 'HAP', 'NEU', 'SAD')
 
 def chay_thanh():
     progress_bar['value'] = 0
     progress_bar.grid(row=6, column=0, pady=20)
 
-def extract_feature(file_name):
-    X, sample_rate = librosa.load(file_name)
+def extract_feature(X, sr):
+    X, sample_rate = X, sr
     stft = np.abs(librosa.stft(X, n_fft=min(len(X), 1024)))
     mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=40).T, axis=0)
     chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sample_rate).T, axis=0)
@@ -44,20 +56,27 @@ def extract_feature(file_name):
                                               sr=sample_rate).T, axis=0)
     return mfccs, chroma, mel, contrast, tonnetz
 
-def parse_audio_files(fn):
+def parse_audio_files(X, sr):
     features = np.empty((0, 193))
 
-    mfccs, chroma, mel, contrast, tonnetz = extract_feature(fn)
+    mfccs, chroma, mel, contrast, tonnetz = extract_feature(X, sr)
 
     ext_features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
     features = np.vstack([features, ext_features])
     return np.array(features)
 
-def predict(path, modelpath):
-    ts_features= parse_audio_files(path)
+def predict(X, sr, modelpath):
+    ts_features= parse_audio_files(X, sr)
     ts_features = np.array(ts_features, dtype=pd.Series)
-    model = pickle.load(open(modelpath, 'rb'))
-    prediction = model.predict(ts_features)[0]
+    if modelpath != './model/keras_model.h5':
+        model = pickle.load(open(modelpath, 'rb'))
+        prediction = model.predict(ts_features)[0]
+    else:
+        ts_features = np.array(ts_features, dtype=np.float32)
+        model = load_model(modelpath)
+        prediction = model.predict(ts_features, verbose=0)
+        predicted_class = np.argmax(prediction[0]) 
+        prediction = tuong_ung[predicted_class]
     return prediction
 
 modelpath = ['./model/ModelKNN.sav']
@@ -67,24 +86,11 @@ def predict_dai(path, modelpath):
     secs = librosa.get_duration(y=y, sr=sr)
     list_emotes = []
     if secs <= 1:
-        list_emotes.append(predict(path, modelpath))
+        list_emotes.append(predict(y, sr, modelpath))
     else:
         for i in range(int((secs - 1) // 0.5) + 3):
             cat = y[max(0, int(sr *( i * 0.5 - 1))): min(int((i * 0.5 + 1) * sr), int(secs * sr))]
-            stft = np.abs(librosa.stft(cat, n_fft=min(len(cat), 1024)))
-            mfccs = np.mean(librosa.feature.mfcc(y=cat, sr=sr, n_mfcc=40).T, axis=0)
-            chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T, axis=0)
-            mel = np.mean(librosa.feature.melspectrogram(y=cat, sr=sr).T, axis=0)
-            contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr).T, axis=0)
-            tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(cat), sr=sr).T, axis=0)
-            features = np.empty((0, 193))
-            ext_features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
-            features = np.vstack([features, ext_features])
-            ts_features = np.array(features)
-            ts_features = np.array(ts_features, dtype=pd.Series)
-            model = pickle.load(open(modelpath, 'rb'))
-            prediction = model.predict(ts_features)[0]
-            list_emotes.append(prediction)
+            list_emotes.append(predict(cat, sr, modelpath))
     return list_emotes
 
 
@@ -133,10 +139,8 @@ def record_it_giay():
     write('./audio.wav', fs, myrecording)
     hien_thi_1.config(text='Kết thúc')
     option.update()
-    return predict('./audio.wav', modelpath[0])
-    
-cam_xuc = ('Hạnh phúc', 'Sợ hãi', 'Giận dữ', 'Bình thường', 'Buồn bã')
-tuong_ung = ('HAP', 'FEA', 'ANG', 'NEU', 'SAD')
+    y, sr = librosa.load('./audio.wav', sr=None)
+    return predict(y, sr, modelpath[0])
 
 root = Tk()
 
@@ -186,6 +190,8 @@ def hien_du_doan(ABC):
     
 def stop_recording():
     """Kích hoạt cờ để dừng luồng."""
+    hien_thi_2.config(text='')
+    option.update()
     stop_event.set()
     nut_dung.grid_forget()
 
@@ -197,7 +203,7 @@ def upload_file():
     # Mở hộp thoại để chọn file
     file_path = filedialog.askopenfilename(title="Chọn file", filetypes=[("WAV Files", "*.wav")])
     if file_path:
-        duong_dan.config(text=f"File đã chọn: {file_path}")
+        duong_dan.config(text=f"File đã chọn: {file_path.split('/')[-1]}")
         option.update()
         list_emo = predict_dai(file_path, modelpath[0])
         y, sr = librosa.load(file_path)
@@ -212,6 +218,13 @@ def upload_file():
         
 Button(option, text='Upload file .wav', width=30, command=upload_file).grid(row=0, column=2)
 option.grid(row=2, column=0, pady=10)
+# bien_check = [0]
+# def check_1_lan():
+#     if check_don.get():
+#         bien_check[0] = 1
+#     else:
+#         bien_check[0] = 0
+# du_doan_don = Checkbutton(option, text='Dự đoán 1 lần', variable=check_don, command=check_1_lan)
 #
 hien_thi_1 = Label(option, text="",font=('cambria', 10))
 hien_thi_1.grid(row=1, column=0,pady=5)
@@ -223,13 +236,13 @@ duong_dan.grid(row=1, column=2,pady=5)
 chon_mo_hinh = Frame(root)
 Label(chon_mo_hinh, text="Chọn mô hình:").grid(row=0, column=0, padx=25)
 combo = Combobox(chon_mo_hinh)
-combo["values"] = ("KNN", "Decision Tree", "Extra Tree", "CNN")
+combo["values"] = ("KNN", "Decision Tree", "Extra Tree", 'Neural Network')
 combo.current(0)
 combo.grid(row=0, column=1,pady=10)
 
-model_path = ('./model/ModelKNN.sav', './model/DecisionTree.sav', './model/ExtraTree.sav', './model/ModelCNN.sav')
+model_path = ('./model/ModelKNN.sav', './model/DecisionTree.sav', './model/ExtraTree.sav', './model/keras_model.h5')
 def lay_mo_hinh():
-    if combo.get() in ("KNN", "Decision Tree", "Extra Tree", "CNN"):
+    if combo.get() in ("KNN", "Decision Tree", "Extra Tree", 'Neural Network'):
         mo_hinh = combo.get()
         messagebox.showinfo("Thông báo", f"Bạn đã chuyển sang mô hình {mo_hinh}")
         if mo_hinh == 'KNN':
@@ -238,7 +251,7 @@ def lay_mo_hinh():
             modelpath[0] = model_path[1]
         elif mo_hinh == 'Extra Tree':
             modelpath[0] = model_path[2]
-        elif mo_hinh == 'CNN':
+        elif mo_hinh == 'Neural Network':
             modelpath[0] = model_path[3]
     else:
         messagebox.showinfo("Thông báo", "Mô hình không hợp lệ.")
