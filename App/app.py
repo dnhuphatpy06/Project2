@@ -33,8 +33,8 @@ Hướng dẫn sơ bộ:
 1. Nút 'Thoát' ở góc trên bên trái: Thoát ứng dụng.
 2. Nút 'Ghi âm ngắn': Ghi âm âm thanh trực tiếp trong 2 giây và sau đó đưa ra dự đoán.
 3. Nút 'Ghi âm dài': Ghi âm âm thanh trực tiếp cho đến khi bấm dừng.
-3. Nút 'Upload file .wav': Tải file âm thanh .wav để mô hình đưa ra dự đoán.
-4. Ô 'Chọn mô hình': Chọn mô hình mà bạn muốn dùng để dự đoán. Lưu ý: Hãy chọn đúng tên mô hình!
+4. Nút 'Upload file .wav': Tải file âm thanh .wav để mô hình đưa ra dự đoán.
+5. Ô 'Chọn mô hình': Chọn mô hình mà bạn muốn dùng để dự đoán. Lưu ý: Hãy chọn đúng tên mô hình!
 
 Chúc bạn có trải nghiệm tốt nhất!""")
 
@@ -99,48 +99,56 @@ def callback(indata, frames, time, status):
     recorded_data.append(indata.copy())
 
 def record_lien_tuc():
-    global recorded_data
-    recorded_data = []
-    hien_thi_2.config(text='Đang ghi âm...')
-    option.update()
-    stream = sounddevice.InputStream(callback=callback, channels=2, samplerate=44100)
-    stream.start()
-    while not stop_event.is_set():
-        pass
-    stream.stop()
-    audio_data = np.concatenate(recorded_data, axis=0)  # Kết hợp các mảng con lại
+    try:
+        global recorded_data
+        recorded_data = []
+        hien_thi_2.config(text='Đang ghi âm...')
+        option.update()
+        stream = sounddevice.InputStream(callback=callback, channels=2, samplerate=44100)
+        stream.start()
+        while not stop_event.is_set():
+            pass
+        stream.stop()
+        audio_data = np.concatenate(recorded_data, axis=0)  # Kết hợp các mảng con lại
 
-    write('./audioL.wav', 44100, audio_data)
-    stream.close()
-    hien_thi_2.config(text='Đang xử lý...')
-    option.update()
-    list_emo = predict_dai('./audioL.wav', modelpath[0])
-    hien_thi_2.config(text='Hoàn tất!')
-    option.update()
-    y, sr = librosa.load('./audioL.wav')
-    sounddevice.play(y, sr)
-    chay_thanh()
-    time.sleep(0.5)
-    step = 100 / len(list_emo)
-    for i in range(len(list_emo)):
-        hien_du_doan(list_emo[i])
-        progress_bar['value'] += step
+        write('./audioL.wav', 44100, audio_data)
+        stream.close()
+        hien_thi_2.config(text='Đang xử lý...')
+        option.update()
+        list_emo = predict_dai('./audioL.wav', modelpath[0])
+        hien_thi_2.config(text='Hoàn tất!')
+        option.update()
+        y, sr = librosa.load('./audioL.wav')
+        sounddevice.play(y, sr)
+        chay_thanh()
         time.sleep(0.5)
-    hien_thi_2.config(text='')
-    option.update()
+        step = 100 / len(list_emo)
+        for i in range(len(list_emo)):
+            hien_du_doan(list_emo[i])
+            progress_bar['value'] += step
+            time.sleep(0.5)
+        hien_thi_2.config(text='')
+        option.update()
+    except sounddevice.PortAudioError:
+        hien_thi_2.config(text='Không thể ghi âm!')
+        option.update()
     
 def record_it_giay():
-    hien_thi_1.config(text='Bắt đầu')
-    option.update()
-    fs = 44100
-    seconds= 2
-    myrecording = sounddevice.rec(int(seconds*fs), samplerate = fs, channels = 2)
-    sounddevice.wait()
-    write('./audio.wav', fs, myrecording)
-    hien_thi_1.config(text='Kết thúc')
-    option.update()
-    y, sr = librosa.load('./audio.wav', sr=None)
-    return predict(y, sr, modelpath[0])
+    try:
+        hien_thi_1.config(text='Bắt đầu')
+        option.update()
+        fs = 44100
+        seconds= 2
+        myrecording = sounddevice.rec(int(seconds*fs), samplerate = fs, channels = 2)
+        sounddevice.wait()
+        write('./audio.wav', fs, myrecording)
+        hien_thi_1.config(text='Kết thúc')
+        option.update()
+        y, sr = librosa.load('./audio.wav', sr=None)
+        return predict(y, sr, modelpath[0])
+    except sounddevice.PortAudioError:
+        hien_thi_1.config(text='Không thể ghi âm!')
+        option.update()
 
 root = Tk()
 
