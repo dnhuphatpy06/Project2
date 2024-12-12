@@ -165,15 +165,21 @@ stop_event = threading.Event()
 option = Frame(root)
 def record_ngan():
     xoa_hien_thi()
-    hien_du_doan(record_it_giay())
+    try:
+        hien_du_doan(record_it_giay())
+    except:
+        pass
     
 def record_dai():
     xoa_hien_thi()
     global stop_event
     stop_event.clear()
-    threading.Thread(target=record_lien_tuc, daemon=True).start()
-    # time.sleep(4)
-    nut_dung.grid(row=0, column=1, padx=10)
+    try:
+        threading.Thread(target=record_lien_tuc, daemon=True).start()
+        # time.sleep(4)
+        nut_dung.grid(row=0, column=1, padx=10)
+    except:
+        pass
 
 def xoa_hien_thi():
     duong_dan.config(text="")
