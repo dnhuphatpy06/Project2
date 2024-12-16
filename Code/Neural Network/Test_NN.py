@@ -7,40 +7,44 @@ from keras.models import load_model
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.utils import to_categorical
 from sklearn.metrics import accuracy_score
+import os
 
-ts_features = np.load(r"D:\Project2\Data\test_fea.npy", allow_pickle=True)
-ts_labels = np.load(r"D:\Project2\Data\test_lab.npy", allow_pickle=True)
+# Khai báo đường dẫn
+current_dir = os.path.dirname(os.path.abspath(__file__))
+test_fea_path = os.path.join(current_dir, "../../Data/test_fea.npy")
+test_lab_path = os.path.join(current_dir, "../../Data/test_lab.npy")
+model_path = os.path.join(current_dir, "NN.h5")
 
-ts_features = np.array(ts_features, dtype=pd.Series)
-ts_labels = np.array(ts_labels, dtype=pd.Series)
-
-test_true = ts_labels
-test_class_label = ts_labels
-
+# Xử lý dữ liệu
+test_features = np.load(test_fea_path, allow_pickle=True)
+test_labels = np.load(test_lab_path, allow_pickle=True)
+test_features = np.array(test_features, dtype=pd.Series)
+test_labels = np.array(test_labels, dtype=pd.Series)
+test_true = test_labels
+test_class_label = test_labels
 encoder = LabelEncoder()
-encoder.fit(ts_labels.astype(str))
-encoded_Y = encoder.transform(ts_labels.astype(str))
+encoder.fit(test_labels.astype(str))
+encoded_Y = encoder.transform(test_labels.astype(str))
+test_labels = to_categorical(encoded_Y)
+test_labels.resize(test_labels.shape[0], 5)
+ts_features = np.array(test_features, dtype=np.float32)
 
-ts_labels = to_categorical(encoded_Y)
+# Tải mô hình
+model = load_model(model_path)
 
-ts_labels.resize(ts_labels.shape[0], 5)
-
-model = load_model(r"D:\Project_2\Keras\keras_model.h5")
-
-ts_features = np.array(ts_features, dtype=np.float32)
+# Dự đoán nhãn dán
 prediction = model.predict(ts_features)
-
 test_predicted = []
-
 labels_map = ["ANG", "FEA", "HAP", "NEU", "SAD"]
-
 for i, val in enumerate(prediction):
     predicted_class = np.argmax(val) 
     test_predicted.append(labels_map[predicted_class])
 
+# Hiển thị độ chính xác
 print("Accuracy Score:", accuracy_score(test_true, test_predicted))
-print('Number of correct prediction:', accuracy_score(test_true, test_predicted, normalize=False), 'out of', len(ts_labels))
+print('Number of correct prediction:', accuracy_score(test_true, test_predicted, normalize=False), 'out of', len(test_labels))
 
+# Vẽ ma trận nhầm lẫn
 matrix = confusion_matrix(test_true, test_predicted)
 classes = list(set(test_class_label))
 classes.sort()

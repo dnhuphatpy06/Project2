@@ -7,42 +7,37 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sn
+import os
 
-val_fea = 'val_fea.npy'
-val_lab = 'val_lab.npy'
-path_to_npy = "D:\Project2\Data"
+# Khai báo đường dẫn
+current_dir = os.path.dirname(os.path.abspath(__file__))
+test_fea_path = os.path.join(current_dir, "../../Data/test_fea.npy")
+test_lab_path = os.path.join(current_dir, "../../Data/test_lab.npy")
+model_path = os.path.join(current_dir, "KNN.sav")
 
-filename = "D:\Project2\Code\KNN\ModelKNN.sav"
+# Xử lý dữ liệu
+test_features = np.load(test_fea_path, allow_pickle=True)
+test_labels = np.load(test_lab_path, allow_pickle=True)
 
-ts_features = np.load(f'{path_to_npy}/{val_fea}', allow_pickle=True)
-ts_labels = np.load(f'{path_to_npy}/{val_lab}', allow_pickle=True)
 
-# Load saved model from file
-model = pickle.load(open(filename, 'rb'))
+# Tải mô hình
+model = pickle.load(open(model_path, 'rb'))
 
-# Predict the emotion class
-prediction = model.predict(ts_features)
-
-# True labels
-test_true = ts_labels
-
-# List to store prediction
+# Dự đoán lớp cảm xúc
+prediction = model.predict(test_features)
+test_true = test_labels
 test_predicted = []
-
-# Iterate over model prediction and store it into list
 for i, val in enumerate(prediction):
     test_predicted.append(val)
 
 
-# Accuracy score of model
+# Hiển thị độ chính xác của mô hình
 print('Accuracy Score:', accuracy_score(test_true, test_predicted))
+print('Number of correct prediction using KNN:', accuracy_score(test_true, test_predicted, normalize=False), 'out of', len(test_labels))
 
-# Number of corrected prediction
-print('Number of correct prediction using KNN:', accuracy_score(test_true, test_predicted, normalize=False), 'out of', len(ts_labels))
-
-# Plotting confusion matrix
+# Vẽ ma trận nhầm lẫn
 matrix = confusion_matrix(test_true, test_predicted)
-classes = list(set(ts_labels))
+classes = list(set(test_labels))
 classes.sort()
 df = pd.DataFrame(matrix, columns=classes, index=classes)
 sn.heatmap(
