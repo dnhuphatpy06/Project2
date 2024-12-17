@@ -94,7 +94,7 @@ def process_files_in_directory(input_directory, output_directory, n_steps_values
             print(f"Đã xử lý file: {file_name}")
 
 # Khai báo được dẫn
-input_directory = "" 
+input_directory = ""
 output_directory = ""
 
 # Thực hiện quá trình tăng cường

@@ -24,5 +24,5 @@ def print_labels_in_directory(directory):
         print(f"Nhãn '{label}' xuất hiện {count} lần.")
 
 # Ví dụ sử dụng:
-directory_path = ""  # Đường dẫn đến thư mục chứa file âm thanh
+directory_path = "" 
 print_labels_in_directory(directory_path)

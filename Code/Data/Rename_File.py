@@ -1,12 +1,13 @@
 import os
 
-def rename_wav_files(directory, index_fist):
+def rename_wav_files(directory, index_fist, char_fist, index_data):
     """
     Đổi tên tất cả các tệp .wav trong thư mục theo định dạng mới, dựa trên nhãn từ tên tệp gốc.
     
     Tham số:
         directory (str): Đường dẫn đến thư mục chứa các tệp âm thanh (.wav).
         index_fist (int): Chỉ số bắt đầu để đổi tên tệp, mỗi tệp sẽ được đánh số từ chỉ số này.
+        index_data (int): Chỉ số để chọn cách trích xuất nhãn cho phù hợp với tập dữ liệu
     
     Trả về:
         None: Hàm không trả về giá trị gì, chỉ thực hiện việc đổi tên tệp trong thư mục.
@@ -21,8 +22,8 @@ def rename_wav_files(directory, index_fist):
     for filename in os.listdir(directory):
         if filename.lower().endswith(".wav"):
             old_file_path = os.path.join(directory, filename)
-            label = extract_labels(filename)
-            new_filename = f"{index_fist}_{label}.wav"
+            label = extract_labels(filename, index_data)
+            new_filename = f"{char_fist}{index_fist}_{label}.wav"
             new_file_path = os.path.join(directory, new_filename)
             os.rename(old_file_path, new_file_path)
             print(f"Đổi tên tệp: {filename} -> {new_filename}")
@@ -46,7 +47,10 @@ def extract_labels(file_name, index_data = None):
         - Hàm này sử dụng `index_data` để xác định cách trích xuất nhãn từ tên tệp tuỳ thuộc vào các bộ dữ liệu.
         - Hàm sẽ trả về nhãn tương ứng dựa trên định dạng của tệp.
     """
-    if index_data == 1:
+    if index_data == 0:
+        return file_name.split("_")[-1].split(".")[0]
+    
+    elif index_data == 1:
         label = file_name.split("-")[-5]
         if label == "01":
             return "NEU"
@@ -88,7 +92,8 @@ def extract_labels(file_name, index_data = None):
 # Khai báo đường dẫn và các chỉ số bắt đầu
 input_directory = ""
 index_fist = 0
-index_data = 3
+char_fist = ""
+index_data = 0
 
 # Thực hiện quá trình đổi tên
-rename_wav_files(input_directory)
+rename_wav_files(input_directory, index_fist, char_fist, index_data)
