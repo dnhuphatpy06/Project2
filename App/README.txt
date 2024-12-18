@@ -1,1 +1,0 @@
-Trước khi chạy hãy vào thư mục 'model', giải nén 'ExtraTree.zip' để có được file 'ExtraTree.sav'
