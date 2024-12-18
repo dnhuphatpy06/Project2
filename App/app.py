@@ -43,7 +43,7 @@ path_to_APP = os.path.dirname(__file__)
 #Các tuple lưu những giá trị cố định:
 cam_xuc = ('Giận dữ', 'Sợ hãi', 'Hạnh phúc', 'Bình thường', 'Buồn bã')
 CAM_XUC = ('ANG', 'FEA', 'HAP', 'NEU', 'SAD')
-model_path = (f'{path_to_APP}/model/ModelKNN.sav', f'{path_to_APP}/model/DecisionTree.sav', f'{path_to_APP}/model/ExtraTree.sav', f'{path_to_APP}/model/keras_model.h5')
+model_path = (f'{path_to_APP}/model/KNN.sav', f'{path_to_APP}/model/DecisionTree.sav', f'{path_to_APP}/model/ExtraTree.sav', f'{path_to_APP}/model/NN.h5')
 
 
 #Biến chung cho cả chương trình: (Biến được lưu dưới dạng danh sách để có thể truy cập trực tiếp trong hàm)
@@ -210,15 +210,19 @@ def hien_thi_du_doan_lien_tuc(path):
     """
     X, sr = librosa.load(path)
     list_emo = predict_true(X, sr)
+    print(list(list_emo))
     if not check_don.get():
         sounddevice.play(X, sr)
         chay_thanh()
-        step = 100 / (len(list_emo) - 1)
+        step = 100 / len(list_emo)
+        print(step)
         for i in range(len(list_emo)):
+            print(progress_bar['value'])
             hien_du_doan(list_emo[i])
             time.sleep(0.5)
             if progress_bar['value'] < 100:
                 progress_bar['value'] += step
+        progress_bar.update_idletasks()
         time.sleep(0.5)
         progress_bar.grid_forget()
         hien_chu_hang_7.config(text='Kết quả tổng quát cuối cùng:',font=('cambria', 15))
@@ -260,7 +264,6 @@ def record():
             pass
         stream.stop()
         audio_data = np.concatenate(recorded_data, axis=0)  # Kết hợp các mảng con lại
-
         write(f'{path_to_APP}/audio.wav', 44100, audio_data)
         stream.close()
         hien_thi_1.config(text='Đang xử lý...')
