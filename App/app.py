@@ -47,7 +47,7 @@ model_path = (f'{path_to_APP}/model/KNN.sav', f'{path_to_APP}/model/DecisionTree
 
 
 #Biến chung cho cả chương trình: (Biến được lưu dưới dạng danh sách để có thể truy cập trực tiếp trong hàm)
-modelpath = [f'{path_to_APP}/model/ModelKNN.sav'] #Đường dẫn đến mô hình
+modelpath = [model_path[0]] #Đường dẫn đến mô hình
 
 #Các hàm xử lý âm thanh
 """Các tham số chung:
@@ -130,7 +130,7 @@ def predict(X, sr):
     """
     ts_features= parse_audio_files(X, sr)
     ts_features = np.array(ts_features, dtype=pd.Series)
-    if modelpath[0] != f'{path_to_APP}/model/keras_model.h5':
+    if modelpath[0] != model_path[3]:
         model = pickle.load(open(modelpath[0], 'rb'))
         prediction = model.predict(ts_features)[0]
     else:
@@ -210,14 +210,11 @@ def hien_thi_du_doan_lien_tuc(path):
     """
     X, sr = librosa.load(path)
     list_emo = predict_true(X, sr)
-    print(list(list_emo))
     if not check_don.get():
         sounddevice.play(X, sr)
         chay_thanh()
         step = 100 / len(list_emo)
-        print(step)
         for i in range(len(list_emo)):
-            print(progress_bar['value'])
             hien_du_doan(list_emo[i])
             time.sleep(0.5)
             if progress_bar['value'] < 100:
