@@ -27,7 +27,20 @@ Chúng tôi đã sử dụng 4 thuật toán khác nhau để giải quyết bà
 
 ### Sử dụng ứng dụng:
 Clone repository về hoặc tải [thư mục](https://github.com/dnhuphatpy06/Project2/tree/main/App) về máy để sử dụng ứng dụng.
-- Vì file **_app.py_** có sử dụng thư viện **_os_** nên không cần phải di chuyển đến thư mục trước khi chạy chương trình mà chỉ cần mở file lên chạy là được. Trước khi chạy đề nghị tải tất cả các thư viện cần thiết được _import_ trong chương trình.
+- Vì file **_app.py_** có sử dụng thư viện **_os_** nên không cần phải di chuyển đến thư mục trước khi chạy chương trình mà chỉ cần mở file lên chạy là được. Trước khi chạy đề nghị tải tất cả các thư viện cần thiết được _import_ trong chương trình. Dưới đây là các thư viện cần thiết:
+  - tkinter
+  - os
+  - pandas
+  - tensorflow
+  - sounddevice
+  - scipy
+  - librosa
+  - numpy
+  - pillow
+  - threading
+  - time
+  - warnings
+  - logging
 - Để sử dụng ứng dụng bằng file **_app.exe_**, tải về tại [Link tải app.exe](http://www.mediafire.com/file/eoyyhxcqb7olvvr/app.zip), giải nén và đặt chung một thư mục với **_app.py_**. Đồng thời, vì mô hình _Extra Tree_ có kích thước lớn (hơn 100mb), không thể push trực tiếp lên GitHub nên hãy giải nén tệp [ExtraTree.zip](https://github.com/dnhuphatpy06/Project2/blob/main/App/model/ExtraTree.zip) và đặt vào thư mục **_model_**.
 Cấu trúc của thư mục chứa **_app.py_** có dạng như sau:
 ![](https://raw.githubusercontent.com/dnhuphatpy06/Project2/refs/heads/main/App/emotion/C%E1%BA%A5u%20tr%C3%BAc%20th%C6%B0%20m%E1%BB%A5c.png)
